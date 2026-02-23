@@ -30,7 +30,6 @@ BG_SURFACE = "#1a1a2e"
 ACCENT = "#6C9FFF"
 ACCENT2 = "#8B7FFF"
 SUCCESS = "#34D399"
-WARNING = "#FBBF24"
 DANGER = "#F87171"
 GOLD = "#F5D78E"
 
@@ -594,17 +593,17 @@ for m in milestones:
     )
 
 fig_proj.update_layout(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(color=TEXT2),
-    height=CHART_MD,
-    margin=dict(t=24, b=24, l=12, r=12),
-    xaxis=dict(showgrid=False, tickfont=dict(color=TEXT3, size=11)),
-    yaxis=dict(
-        showgrid=True, gridcolor="rgba(255,255,255,0.04)",
-        tickfont=dict(color=TEXT3, size=11), tickprefix="€",
-    ),
-    legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center", font=dict(size=11)),
+    **make_layout(
+        height=CHART_MD,
+        margin=dict(t=24, b=24, l=12, r=12),
+        xaxis=dict(showgrid=False, tickfont=dict(color=TEXT3, size=11)),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.04)",
+            tickfont=dict(color=TEXT3, size=11),
+            tickprefix="€",
+        ),
+    )
 )
 st.plotly_chart(fig_proj, use_container_width=True, config=PLOTLY_CFG)
 
@@ -679,17 +678,17 @@ fig_mc.add_hline(
 )
 
 fig_mc.update_layout(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(color=TEXT2),
-    height=CHART_LG,
-    margin=dict(t=24, b=24, l=12, r=12),
-    xaxis=dict(showgrid=False, tickfont=dict(color=TEXT3, size=11)),
-    yaxis=dict(
-        showgrid=True, gridcolor="rgba(255,255,255,0.04)",
-        tickfont=dict(color=TEXT3, size=11), tickprefix="€",
-    ),
-    legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center", font=dict(size=11)),
+    **make_layout(
+        height=CHART_LG,
+        margin=dict(t=24, b=24, l=12, r=12),
+        xaxis=dict(showgrid=False, tickfont=dict(color=TEXT3, size=11)),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.04)",
+            tickfont=dict(color=TEXT3, size=11),
+            tickprefix="€",
+        ),
+    )
 )
 st.plotly_chart(fig_mc, use_container_width=True, config=PLOTLY_CFG)
 
@@ -753,20 +752,19 @@ with st.expander("📊 Distribuzione scenari finali", expanded=False):
         annotation_font_color=TEXT1, annotation_font_size=11,
     )
     fig_hist.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color=TEXT2),
-        height=CHART_SM,
-        margin=dict(t=24, b=24, l=12, r=12),
-        title=dict(text="Distribuzione valori a 25 anni", font=dict(size=14, color=TEXT2), x=0.5),
-        xaxis=dict(showgrid=False, tickfont=dict(color=TEXT3, size=11), tickprefix="€"),
-        yaxis=dict(
-            showgrid=True, gridcolor="rgba(255,255,255,0.04)",
-            tickfont=dict(color=TEXT3, size=11),
-            title=dict(text="Scenari", font=dict(size=11, color=TEXT3)),
-        ),
-        bargap=0.05,
-        legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center", font=dict(size=11)),
+        **make_layout(
+            height=CHART_SM,
+            margin=dict(t=24, b=24, l=12, r=12),
+            title=dict(text="Distribuzione valori a 25 anni", font=dict(size=14, color=TEXT2), x=0.5),
+            xaxis=dict(showgrid=False, tickfont=dict(color=TEXT3, size=11), tickprefix="€"),
+            yaxis=dict(
+                showgrid=True,
+                gridcolor="rgba(255,255,255,0.04)",
+                tickfont=dict(color=TEXT3, size=11),
+                title=dict(text="Scenari", font=dict(size=11, color=TEXT3)),
+            ),
+            bargap=0.05,
+        )
     )
     st.plotly_chart(fig_hist, use_container_width=True, config=PLOTLY_CFG)
 
