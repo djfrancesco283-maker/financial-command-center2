@@ -1,5 +1,6 @@
 # app.py — Financial Command Center v2.0
-# Fully optimized, production-ready, mobile-first, WCAG AA compliant
+# Production-ready, mobile-first, WCAG AA compliant
+
 import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
@@ -7,7 +8,6 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from typing import Optional
 
 # ============================================================
 # PAGE CONFIG
@@ -38,7 +38,6 @@ TEXT1 = "#F0F0F5"
 TEXT2 = "#A0A0B8"
 TEXT3 = "#6B6B80"
 
-RADIUS = "16px"
 CHART_SM = 340
 CHART_MD = 400
 CHART_LG = 480
@@ -51,7 +50,7 @@ CAT_COLORS = {
 }
 
 # ============================================================
-# GLOBAL CSS
+# CSS
 # ============================================================
 st.markdown(
     """
@@ -63,80 +62,53 @@ st.markdown(
     }
     #MainMenu, footer, header[data-testid="stHeader"],
     div[data-testid="stToolbar"] { display: none !important; }
-
     .block-container {
         padding-top: 1rem !important;
         padding-bottom: 2rem !important;
         max-width: 1200px;
     }
-
     h1, h2, h3 { color: #F0F0F5 !important; font-weight: 700 !important; }
     p, span, label, li { color: #A0A0B8 !important; }
-
     .stMetric label {
-        color: #6B6B80 !important;
-        font-size: 0.75rem !important;
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        color: #6B6B80 !important; font-size: 0.75rem !important;
+        font-weight: 600 !important; text-transform: uppercase; letter-spacing: 0.05em;
     }
     .stMetric [data-testid="stMetricValue"] {
-        color: #F0F0F5 !important;
-        font-size: 1.625rem !important;
-        font-weight: 800 !important;
+        color: #F0F0F5 !important; font-size: 1.625rem !important; font-weight: 800 !important;
     }
-
     .stButton > button {
-        background: #12121e !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
-        border-radius: 12px !important;
-        color: #F0F0F5 !important;
-        font-weight: 600 !important;
+        background: #12121e !important; border: 1px solid rgba(255,255,255,0.08) !important;
+        border-radius: 12px !important; color: #F0F0F5 !important; font-weight: 600 !important;
         transition: all 0.2s ease !important;
     }
     .stButton > button:hover {
-        background: rgba(108,159,255,0.1) !important;
-        border-color: #6C9FFF !important;
+        background: rgba(108,159,255,0.1) !important; border-color: #6C9FFF !important;
     }
     .stButton > button:focus-visible {
-        outline: 2px solid #6C9FFF !important;
-        outline-offset: 2px !important;
+        outline: 2px solid #6C9FFF !important; outline-offset: 2px !important;
     }
-
     details[data-testid="stExpander"] > summary {
-        background: #12121e;
-        border: 1px solid rgba(255,255,255,0.06);
-        border-radius: 16px;
-        padding: 0.875rem 1.125rem;
-        transition: all 0.2s ease;
+        background: #12121e; border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px; padding: 0.875rem 1.125rem; transition: all 0.2s ease;
     }
     details[data-testid="stExpander"] > summary:hover {
-        background: rgba(108,159,255,0.06);
-        border-color: rgba(108,159,255,0.15);
+        background: rgba(108,159,255,0.06); border-color: rgba(108,159,255,0.15);
     }
     details[data-testid="stExpander"] > div { padding-top: 0.75rem; }
-
     .stSpinner > div > div { color: #6C9FFF; }
     hr { border-color: rgba(255,255,255,0.06) !important; margin: 1.5rem 0 !important; }
-
     @media (max-width: 640px) {
-        .block-container {
-            padding-left: 0.75rem !important;
-            padding-right: 0.75rem !important;
-        }
+        .block-container { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
         .stMetric [data-testid="stMetricValue"] { font-size: 1.375rem !important; }
         h1 { font-size: 1.75rem !important; }
         h2 { font-size: 1.25rem !important; }
     }
-
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #06060a; }
     ::-webkit-scrollbar-thumb { background: #1a1a2e; border-radius: 9999px; }
-
     @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after {
-            animation-duration: 0.01ms !important;
-            transition-duration: 0.01ms !important;
+            animation-duration: 0.01ms !important; transition-duration: 0.01ms !important;
         }
     }
     </style>
@@ -145,7 +117,7 @@ st.markdown(
 )
 
 # ============================================================
-# PLOTLY SHARED CONFIG
+# PLOTLY HELPERS
 # ============================================================
 PLOTLY_CFG = {
     "displayModeBar": False,
@@ -155,8 +127,9 @@ PLOTLY_CFG = {
 }
 
 
-def base_layout(height=CHART_MD, **kw):
-    layout = dict(
+def make_layout(height=CHART_MD, **overrides):
+    """Build a Plotly layout dict. Overrides win over defaults."""
+    defaults = dict(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(color=TEXT2, family="Inter, -apple-system, sans-serif"),
@@ -170,24 +143,24 @@ def base_layout(height=CHART_MD, **kw):
         legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center", font=dict(size=11)),
         height=height,
     )
-    layout.update(kw)
-    return layout
+    defaults.update(overrides)
+    return defaults
 
 
 # ============================================================
-# DATA — Portfolio
+# DATA
 # ============================================================
 patrimonio = {
-    "Postepay Evolution":      {"saldo": 1000,  "tipo": "Liquidità",    "icona": "💳", "tooltip": "Carta prepagata"},
-    "Buddybank":               {"saldo": 400,   "tipo": "Liquidità",    "icona": "🏦", "tooltip": "Conto corrente online"},
-    "Revolut":                 {"saldo": 3000,  "tipo": "Liquidità",    "icona": "💳", "tooltip": "Fintech pagamenti"},
-    "Isybank":                 {"saldo": 700,   "tipo": "Liquidità",    "icona": "🏦", "tooltip": "Conto risparmio"},
-    "Contanti":                {"saldo": 2500,  "tipo": "Liquidità",    "icona": "💵", "tooltip": "Denaro contante"},
-    "Degiro":                  {"saldo": 0,     "tipo": "Investimento", "icona": "📈", "label": "Degiro (ETF)", "tooltip": "Brokeraggio ETF"},
-    "Scalable Capital":        {"saldo": 50,    "tipo": "Investimento", "icona": "📈", "tooltip": "Robo-advisor"},
-    "Bondora":                 {"saldo": 4400,  "tipo": "Investimento", "icona": "💰", "tooltip": "P2P lending"},
-    "Buono Fruttifero":        {"saldo": 14000, "tipo": "Risparmio",    "icona": "🏛️", "tooltip": "Risparmio postale"},
-    "TFR Lavoro":              {"saldo": 2000,  "tipo": "TFR",          "icona": "🏢", "tooltip": "Fine rapporto"},
+    "Postepay Evolution":  {"saldo": 1000,  "tipo": "Liquidità",    "icona": "💳", "tooltip": "Carta prepagata"},
+    "Buddybank":           {"saldo": 400,   "tipo": "Liquidità",    "icona": "🏦", "tooltip": "Conto corrente"},
+    "Revolut":             {"saldo": 3000,  "tipo": "Liquidità",    "icona": "💳", "tooltip": "Fintech"},
+    "Isybank":             {"saldo": 700,   "tipo": "Liquidità",    "icona": "🏦", "tooltip": "Conto risparmio"},
+    "Contanti":            {"saldo": 2500,  "tipo": "Liquidità",    "icona": "💵", "tooltip": "Cash"},
+    "Degiro":              {"saldo": 0,     "tipo": "Investimento", "icona": "📈", "label": "Degiro (ETF)", "tooltip": "Brokeraggio"},
+    "Scalable Capital":    {"saldo": 50,    "tipo": "Investimento", "icona": "📈", "tooltip": "Robo-advisor"},
+    "Bondora":             {"saldo": 4400,  "tipo": "Investimento", "icona": "💰", "tooltip": "P2P lending"},
+    "Buono Fruttifero":    {"saldo": 14000, "tipo": "Risparmio",    "icona": "🏛️", "tooltip": "Risparmio postale"},
+    "TFR Lavoro":          {"saldo": 2000,  "tipo": "TFR",          "icona": "🏢", "tooltip": "Fine rapporto"},
 }
 
 etf_data = {
@@ -218,13 +191,12 @@ naval_quotes = [
 ]
 
 # ============================================================
-# DATA FETCHING — Cached batch download
+# DATA FETCHING
 # ============================================================
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_etf_prices(etf_dict):
     results = {}
     issues = []
-
     tickers = [d["ticker"] for d in etf_dict.values() if d.get("ticker")]
     fx_tickers = list({d["fx_ticker"] for d in etf_dict.values() if d.get("fx_ticker")})
     all_tickers = list(dict.fromkeys(tickers + fx_tickers))
@@ -232,7 +204,7 @@ def fetch_etf_prices(etf_dict):
     if not all_tickers:
         for name, d in etf_dict.items():
             results[name] = float(d.get("backup", 0))
-        issues.append("Nessun ticker configurato — uso backup.")
+        issues.append("Nessun ticker configurato.")
         return results, issues
 
     try:
@@ -243,7 +215,7 @@ def fetch_etf_prices(etf_dict):
     except Exception as e:
         for name, d in etf_dict.items():
             results[name] = float(d.get("backup", 0))
-        issues.append("Download fallito: " + str(e) + " — uso backup.")
+        issues.append("Download fallito: " + str(e))
         return results, issues
 
     def last_close(ticker):
@@ -262,42 +234,35 @@ def fetch_etf_prices(etf_dict):
         ticker = d.get("ticker")
         shares = float(d.get("quote", 0))
         backup = float(d.get("backup", 0))
-
         if not ticker:
             results[name] = backup
             if backup > 0:
-                issues.append(name + ": ticker mancante — uso backup.")
+                issues.append(name + ": no ticker, uso backup.")
             continue
-
         price = last_close(ticker)
         if price is None:
             results[name] = backup
-            issues.append(name + ": prezzo non disponibile — uso backup.")
+            issues.append(name + ": prezzo N/A, uso backup.")
             continue
-
         fx = 1.0
         fx_ticker = d.get("fx_ticker")
         if fx_ticker:
             fx_price = last_close(fx_ticker)
             if fx_price is None:
-                issues.append(name + ": FX non disponibile — assumo 1.0.")
+                issues.append(name + ": FX N/A, assumo 1.0.")
             else:
                 fx = float(fx_price)
-
         value = round(price * shares * fx, 2)
         if backup > 0:
             ratio = value / backup
             if ratio > 1.8 or ratio < 0.55:
-                issues.append(
-                    name + ": valore anomalo (live " + str(round(value)) + " vs backup " + str(round(backup)) + ")."
-                )
+                issues.append(name + ": valore anomalo.")
         results[name] = value
-
     return results, issues
 
 
 # ============================================================
-# COMPUTATION FUNCTIONS
+# COMPUTATION
 # ============================================================
 def compute_projection(initial, monthly, annual_return, years=30):
     r = (1 + annual_return / 100) ** (1 / 12) - 1
@@ -323,46 +288,29 @@ def run_monte_carlo(initial, monthly, annual_return, annual_vol, years=25, sims=
     n = years * 12
     r_m = (annual_return / 100) / 12
     vol_m = (annual_vol / 100) / np.sqrt(12)
-
     returns = rng.normal(r_m, vol_m, size=(sims, n))
     scenarios = np.zeros((sims, n + 1))
     scenarios[:, 0] = initial
-
     for m in range(n):
         scenarios[:, m + 1] = np.maximum(
             scenarios[:, m] * (1 + returns[:, m]) + monthly, 0
         )
-
     return scenarios, scenarios[:, -1]
 
 
 # ============================================================
-# CONTROLS RENDERER
+# CONTROLS
 # ============================================================
 def render_controls(ui):
     ui.markdown("### Simulatore")
     ui.caption("Regola i parametri per proiezione e Monte Carlo.")
-
     cols = ui.columns(2)
     with cols[0]:
-        cm = ui.slider(
-            "Contributo mensile (€)", 100, 3000, 600, 50,
-            help="Importo versato ogni mese."
-        )
-        ed = ui.slider(
-            "Entrate extra (€/mese)", 0, 5000, 0, 100,
-            help="Entrate aggiuntive da progetti."
-        )
+        cm = ui.slider("Contributo mensile (€)", 100, 3000, 600, 50, help="Importo mensile.")
+        ed = ui.slider("Entrate extra (€/mese)", 0, 5000, 0, 100, help="Entrate da progetti.")
     with cols[1]:
-        ra = ui.slider(
-            "Rendimento annuo (%)", 3.0, 15.0, 7.0, 0.5,
-            help="Rendimento atteso."
-        )
-        va = ui.slider(
-            "Volatilità annua (%)", 5.0, 30.0, 14.0, 0.5,
-            help="Fluttuazioni stimate del mercato."
-        )
-
+        ra = ui.slider("Rendimento annuo (%)", 3.0, 15.0, 7.0, 0.5, help="Rendimento atteso.")
+        va = ui.slider("Volatilità annua (%)", 5.0, 30.0, 14.0, 0.5, help="Fluttuazioni mercato.")
     total = cm + ed
     ui.markdown("---")
     ui.metric("Contributo totale mensile", "€{:,.0f}".format(total))
@@ -374,24 +322,25 @@ def render_warnings(ui, issues_list):
         with ui.expander("⚠ Avvisi dati (" + str(len(issues_list)) + ")", expanded=False):
             for msg in issues_list[:20]:
                 ui.warning(msg)
+
+
 # ============================================================
 # LOAD DATA
 # ============================================================
-with st.spinner("Aggiornamento prezzi in tempo reale..."):
+with st.spinner("Aggiornamento prezzi..."):
     prezzi_etf, issues = fetch_etf_prices(etf_data)
     totale_degiro = sum(prezzi_etf.values())
     patrimonio["Degiro"]["saldo"] = totale_degiro
 
 # ============================================================
-# CONTROLS — Single location, no duplication
+# RENDER CONTROLS
 # ============================================================
 render_warnings(st, issues)
-
 with st.expander("⚙ Simulatore", expanded=True):
     contributo, rendimento, extra, volatilita, contrib_totale = render_controls(st)
 
 # ============================================================
-# CORE CALCULATIONS
+# CALCULATIONS
 # ============================================================
 net_worth = sum(v["saldo"] for v in patrimonio.values())
 liquidita = sum(v["saldo"] for v in patrimonio.values() if v["tipo"] == "Liquidità")
@@ -404,84 +353,70 @@ pct_prod = (produttivo / net_worth * 100) if net_worth > 0 else 0
 # ============================================================
 # HERO HEADER
 # ============================================================
-hero_html = (
-    '<div style="'
-    "background: linear-gradient(160deg, #0c0c14 0%, #1a1a2e 60%, #12121e 100%);"
-    "border: 1px solid rgba(255,255,255,0.06);"
-    "border-radius: 20px;"
-    "padding: 2rem 1.5rem;"
-    "margin-bottom: 1.5rem;"
-    "text-align: center;"
-    "box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 40px rgba(108,159,255,0.06);"
-    "position: relative; overflow: hidden;"
-    '" role="banner" aria-label="Riepilogo patrimonio">'
-    # Orb
-    '<div style="'
-    "position:absolute;top:-60px;right:-60px;width:200px;height:200px;"
-    "background:radial-gradient(circle, rgba(108,159,255,0.06) 0%, transparent 70%);"
-    "border-radius:50%;pointer-events:none;"
-    '"></div>'
-    # Subtitle
-    '<p style="'
-    "font-size:0.6875rem;color:#6B6B80;letter-spacing:0.2em;"
-    "text-transform:uppercase;font-weight:600;margin:0 0 0.75rem 0;"
-    '">Financial Command Center</p>'
-    # Net worth
-    '<h1 style="'
-    "font-size:clamp(2.25rem,7vw,3.5rem);margin:0 0 0.25rem 0;"
-    "color:#F0F0F5;font-weight:800;letter-spacing:-0.03em;line-height:1.1;"
-    '" aria-label="Patrimonio netto: '
-    + "{:,.0f}".format(net_worth)
-    + ' euro">'
-    + "€{:,.0f}".format(net_worth)
-    + "</h1>"
-    # Date
-    '<p style="font-size:0.8125rem;color:#6B6B80;margin:0 0 1.5rem 0;">'
-    "Patrimonio Netto · "
-    + datetime.now().strftime("%d %b %Y")
-    + "</p>"
-    # Stats row
+hero_stats = (
     '<div style="display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;" role="list">'
     # Productive
     '<div style="min-width:100px;" role="listitem">'
-    '<p style="font-size:1.25rem;font-weight:700;margin:0;color:#34D399;">'
-    + "€{:,.0f}".format(produttivo)
-    + "</p>"
-    '<p style="font-size:0.6875rem;color:#6B6B80;margin:2px 0 0 0;text-transform:uppercase;letter-spacing:0.1em;">'
-    "Produttivo · {:.0f}%".format(pct_prod)
-    + "</p></div>"
+    '<p style="font-size:1.25rem;font-weight:700;margin:0;color:' + SUCCESS + ';">'
+    "€{:,.0f}".format(produttivo) + "</p>"
+    '<p style="font-size:0.6875rem;color:' + TEXT3 + ';margin:2px 0 0 0;'
+    'text-transform:uppercase;letter-spacing:0.1em;">Produttivo · '
+    "{:.0f}%".format(pct_prod) + "</p></div>"
     # Liquidity
     '<div style="min-width:100px;" role="listitem">'
-    '<p style="font-size:1.25rem;font-weight:700;margin:0;color:#6C9FFF;">'
-    + "€{:,.0f}".format(liquidita)
-    + "</p>"
-    '<p style="font-size:0.6875rem;color:#6B6B80;margin:2px 0 0 0;text-transform:uppercase;letter-spacing:0.1em;">'
-    "Liquidità</p></div>"
+    '<p style="font-size:1.25rem;font-weight:700;margin:0;color:' + ACCENT + ';">'
+    "€{:,.0f}".format(liquidita) + "</p>"
+    '<p style="font-size:0.6875rem;color:' + TEXT3 + ';margin:2px 0 0 0;'
+    'text-transform:uppercase;letter-spacing:0.1em;">Liquidità</p></div>'
     # TFR
     '<div style="min-width:100px;" role="listitem">'
-    '<p style="font-size:1.25rem;font-weight:700;margin:0;color:#F87171;">'
-    + "€{:,.0f}".format(tfr)
-    + "</p>"
-    '<p style="font-size:0.6875rem;color:#6B6B80;margin:2px 0 0 0;text-transform:uppercase;letter-spacing:0.1em;">'
-    "TFR</p></div>"
-    "</div></div>"
+    '<p style="font-size:1.25rem;font-weight:700;margin:0;color:' + DANGER + ';">'
+    "€{:,.0f}".format(tfr) + "</p>"
+    '<p style="font-size:0.6875rem;color:' + TEXT3 + ';margin:2px 0 0 0;'
+    'text-transform:uppercase;letter-spacing:0.1em;">TFR</p></div>'
+    "</div>"
+)
+
+hero_html = (
+    '<div style="'
+    "background:linear-gradient(160deg, " + BG_SECONDARY + " 0%, " + BG_SURFACE + " 60%, " + BG_ELEVATED + " 100%);"
+    "border:1px solid rgba(255,255,255,0.06);"
+    "border-radius:20px;padding:2rem 1.5rem;margin-bottom:1.5rem;"
+    "text-align:center;position:relative;overflow:hidden;"
+    "box-shadow:0 12px 40px rgba(0,0,0,0.5), 0 0 40px rgba(108,159,255,0.06);"
+    '" role="banner">'
+    # Decorative orb
+    '<div style="position:absolute;top:-60px;right:-60px;width:200px;height:200px;'
+    'background:radial-gradient(circle,rgba(108,159,255,0.06) 0%,transparent 70%);'
+    'border-radius:50%;pointer-events:none;"></div>'
+    # Title
+    '<p style="font-size:0.6875rem;color:' + TEXT3 + ';letter-spacing:0.2em;'
+    'text-transform:uppercase;font-weight:600;margin:0 0 0.75rem 0;">'
+    "Financial Command Center</p>"
+    # Net worth
+    '<h1 style="font-size:clamp(2.25rem,7vw,3.5rem);margin:0 0 0.25rem 0;'
+    "color:" + TEXT1 + ";font-weight:800;letter-spacing:-0.03em;line-height:1.1;"
+    '">'
+    "€{:,.0f}".format(net_worth) + "</h1>"
+    # Date
+    '<p style="font-size:0.8125rem;color:' + TEXT3 + ';margin:0 0 1.5rem 0;">'
+    "Patrimonio Netto · " + datetime.now().strftime("%d %b %Y") + "</p>"
+    + hero_stats
+    + "</div>"
 )
 st.markdown(hero_html, unsafe_allow_html=True)
 
 # ============================================================
-# ROW 1: Donut + Category Bars
+# ROW 1: DONUT + CATEGORY BARS
 # ============================================================
 df_pat = pd.DataFrame([
-    {
-        "Conto": v.get("label", k),
-        "Saldo": float(v["saldo"]),
-        "Tipo": v["tipo"],
-    }
+    {"Conto": v.get("label", k), "Saldo": float(v["saldo"]), "Tipo": v["tipo"]}
     for k, v in patrimonio.items()
 ])
 
 col1, col2 = st.columns(2)
 
+# --- Donut chart ---
 with col1:
     colors = [CAT_COLORS.get(t, "#95a5a6") for t in df_pat["Tipo"]]
     fig_donut = go.Figure(data=[go.Pie(
@@ -494,7 +429,11 @@ with col1:
         hovertemplate="<b>%{label}</b><br>€%{value:,.0f}<br>%{percent:.1%}<extra></extra>",
     )])
     fig_donut.update_layout(
-        **base_layout(CHART_SM),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color=TEXT2),
+        height=CHART_SM,
+        margin=dict(t=48, b=24, l=12, r=12),
         title=dict(text="Distribuzione Patrimonio", font=dict(size=16, color=TEXT1), x=0.5),
         annotations=[dict(
             text="€{:,.0f}".format(net_worth),
@@ -504,27 +443,29 @@ with col1:
     )
     st.plotly_chart(fig_donut, use_container_width=True, config=PLOTLY_CFG)
 
+# --- Category bars ---
 with col2:
     df_cat = df_pat.groupby("Tipo")["Saldo"].sum().reset_index().sort_values("Saldo", ascending=True)
     fig_bar = go.Figure(data=[go.Bar(
         x=df_cat["Saldo"],
         y=df_cat["Tipo"],
         orientation="h",
-        marker=dict(
-            color=[CAT_COLORS.get(c, "#95a5a6") for c in df_cat["Tipo"]],
-            line=dict(width=0),
-        ),
+        marker=dict(color=[CAT_COLORS.get(c, "#95a5a6") for c in df_cat["Tipo"]]),
         text=["€{:,.0f}".format(v) for v in df_cat["Saldo"]],
         textposition="outside",
         textfont=dict(color=TEXT1, size=12),
         hovertemplate="<b>%{y}</b><br>€%{x:,.0f}<extra></extra>",
     )])
     fig_bar.update_layout(
-        **base_layout(CHART_SM),
-        title=dict(text="Patrimonio per Categoria", font=dict(size=16, color=TEXT1), x=0.5),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color=TEXT2),
+        height=CHART_SM,
+        margin=dict(t=48, b=24, l=12, r=40),
+        title=dict(text="Per Categoria", font=dict(size=16, color=TEXT1), x=0.5),
         xaxis=dict(showgrid=False, showticklabels=False),
         yaxis=dict(tickfont=dict(size=12, color=TEXT2)),
-        margin=dict(t=48, b=24, l=12, r=40),
+        legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center", font=dict(size=11)),
     )
     st.plotly_chart(fig_bar, use_container_width=True, config=PLOTLY_CFG)
 
@@ -533,12 +474,10 @@ with col2:
 # ============================================================
 st.markdown("---")
 st.markdown(
-    '<h2 style="text-align:center;color:'
-    + TEXT1
-    + ';margin:0.5rem 0;">Portafoglio ETF Degiro</h2>',
+    '<h2 style="text-align:center;color:' + TEXT1 + ';margin:0.5rem 0;">Portafoglio ETF Degiro</h2>',
     unsafe_allow_html=True,
 )
-st.caption("Dettaglio posizioni con valori live da Yahoo Finance.")
+st.caption("Dettaglio posizioni con valori live · Totale: €{:,.0f}".format(totale_degiro))
 
 df_etf = pd.DataFrame([
     {"ETF": nome, "Valore": float(val), "Classe": etf_data[nome]["classe"], "Desc": etf_data[nome]["desc"]}
@@ -554,7 +493,7 @@ fig_etf = go.Figure(data=[go.Bar(
     orientation="h",
     marker=dict(
         color=df_etf["Valore"],
-        colorscale=[[0, "#1a1a4e"], [0.5, "#6C9FFF"], [1, "#34D399"]],
+        colorscale=[[0, "#1a1a4e"], [0.5, ACCENT], [1, SUCCESS]],
         showscale=False,
     ),
     text=[
@@ -567,19 +506,19 @@ fig_etf = go.Figure(data=[go.Bar(
     hovertemplate="<b>%{y}</b><br>%{customdata[0]}<br>€%{x:,.0f}<extra></extra>",
 )])
 fig_etf.update_layout(
-    **base_layout(CHART_MD),
-    title=dict(
-        text="Totale: €{:,.0f}".format(totale_degiro),
-        font=dict(size=14, color=TEXT2), x=0.5,
-    ),
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(color=TEXT2),
+    height=CHART_MD,
+    margin=dict(t=24, b=24, l=12, r=100),
     xaxis=dict(showgrid=False, showticklabels=False),
     yaxis=dict(tickfont=dict(size=10, color=TEXT2)),
-    margin=dict(t=48, b=24, l=12, r=100),
+    legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center", font=dict(size=11)),
 )
 st.plotly_chart(fig_etf, use_container_width=True, config=PLOTLY_CFG)
 
 # ============================================================
-# ROAD TO PANAMERA — Milestones
+# MILESTONES — Road to Panamera
 # ============================================================
 st.markdown("---")
 st.markdown(
@@ -595,47 +534,33 @@ for m in milestones:
     anni = mesi // 12
     mesi_rest = mesi % 12
 
-    # Adaptive bar text: inside if enough space, otherwise outside
-    bar_text_pos = "inside" if pct > 15 else "outside"
-
-    milestone_html = (
+    bar_html = (
         '<div style="margin:12px 0;" role="progressbar" '
         'aria-valuenow="' + str(round(pct, 1)) + '" '
         'aria-valuemin="0" aria-valuemax="100" '
         'aria-label="Progresso verso ' + m["nome"] + '">'
+        # Top row
         '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'
         '<span style="font-size:0.9375rem;color:' + TEXT1 + ';font-weight:600;">'
-        + m["icon"] + " " + m["nome"] + "</span>"
+        + m["icon"] + " " +
+        m["nome"] + "</span>"
         '<span style="font-size:0.75rem;color:' + TEXT3 + ';">'
-        + m["reward"] + "</span>"
-        "</div>"
-        # Progress bar track
-        '<div style="'
-        "background:rgba(255,255,255,0.04);"
-        "border-radius:10px;height:28px;margin:6px 0;overflow:hidden;"
-        "position:relative;border:1px solid rgba(255,255,255,0.04);"
-        '">'
-        # Progress bar fill
-        '<div style="'
-        "background:linear-gradient(90deg, " + m["color"] + ", " + m["color"] + "88);"
-        "height:100%;width:" + str(pct) + "%;"
-        "border-radius:10px;"
-        "display:flex;align-items:center;"
-        + ("justify-content:center;" if pct > 15 else "justify-content:flex-end;padding-right:8px;")
-        + "font-weight:700;font-size:0.75rem;color:white;"
-        "min-width:40px;"
-        "transition:width 0.6s cubic-bezier(0.4,0,0.2,1);"
-        '">'
-        + "{:.1f}%".format(pct)
-        + "</div></div>"
-        # Info line
+        + m["reward"] + "</span></div>"
+        # Progress bar
+        '<div style="background:rgba(255,255,255,0.04);border-radius:10px;height:28px;'
+        'margin:6px 0;overflow:hidden;border:1px solid rgba(255,255,255,0.04);">'
+        '<div style="background:linear-gradient(90deg,' + m["color"] + "," + m["color"] + "88);"
+        "height:100%;width:" + str(pct) + "%;border-radius:10px;"
+        "display:flex;align-items:center;justify-content:center;"
+        'font-weight:700;font-size:0.75rem;color:white;min-width:40px;">'
+        + "{:.1f}%".format(pct) + "</div></div>"
+        # Bottom info
         '<p style="font-size:0.6875rem;color:' + TEXT3 + ';margin:4px 0 0 0;">'
-        "€{:,.0f}".format(net_worth)
-        + " / €{:,.0f}".format(m["target"])
+        "€{:,.0f}".format(net_worth) + " / €{:,.0f}".format(m["target"])
         + " · ~" + str(anni) + "a " + str(mesi_rest) + "m → " + data_stima
         + "</p></div>"
     )
-    st.markdown(milestone_html, unsafe_allow_html=True)
+    st.markdown(bar_html, unsafe_allow_html=True)
 
 # ============================================================
 # PROJECTION CHART
@@ -648,52 +573,43 @@ st.markdown(
 st.caption("Crescita stimata a 30 anni con contributi regolari e rendimento composto.")
 
 proiezione = compute_projection(net_worth, contrib_totale, rendimento, anni=30)
-date_range = pd.date_range(
-    start=pd.Timestamp.today().normalize(),
-    periods=len(proiezione),
-    freq="MS",
+date_proj = pd.date_range(
+    start=pd.Timestamp.today().normalize(), periods=len(proiezione), freq="MS"
 ).to_pydatetime()
 
 fig_proj = go.Figure()
-
-# Main projection line
 fig_proj.add_trace(go.Scatter(
-    x=date_range,
-    y=proiezione,
-    mode="lines",
-    name="Proiezione",
+    x=date_proj, y=proiezione, mode="lines", name="Proiezione",
     line=dict(color=ACCENT, width=2.5),
-    fill="tozeroy",
-    fillcolor="rgba(108,159,255,0.06)",
+    fill="tozeroy", fillcolor="rgba(108,159,255,0.06)",
     hovertemplate="<b>%{x|%B %Y}</b><br>€%{y:,.0f}<extra></extra>",
 ))
 
-# Milestone lines
 for m in milestones:
     fig_proj.add_hline(
-        y=m["target"],
-        line_dash="dot",
-        line_color=m["color"],
-        opacity=0.5,
+        y=m["target"], line_dash="dot", line_color=m["color"], opacity=0.5,
         annotation_text=m["nome"] + " · " + m["reward"],
         annotation_position="top right",
-        annotation_font_color=m["color"],
-        annotation_font_size=10,
+        annotation_font_color=m["color"], annotation_font_size=10,
     )
 
 fig_proj.update_layout(
-    **base_layout(CHART_MD),
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(color=TEXT2),
+    height=CHART_MD,
+    margin=dict(t=24, b=24, l=12, r=12),
+    xaxis=dict(showgrid=False, tickfont=dict(color=TEXT3, size=11)),
     yaxis=dict(
-        showgrid=True,
-        gridcolor="rgba(255,255,255,0.04)",
-        tickfont=dict(color=TEXT3, size=11),
-        tickprefix="€",
+        showgrid=True, gridcolor="rgba(255,255,255,0.04)",
+        tickfont=dict(color=TEXT3, size=11), tickprefix="€",
     ),
+    legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center", font=dict(size=11)),
 )
 st.plotly_chart(fig_proj, use_container_width=True, config=PLOTLY_CFG)
 
 # ============================================================
-# MONTE CARLO SIMULATION
+# MONTE CARLO
 # ============================================================
 st.markdown("---")
 st.markdown(
@@ -703,7 +619,7 @@ st.markdown(
 st.caption("1.000 scenari probabilistici a 25 anni considerando la volatilità di mercato.")
 
 scenarios, final_values = run_monte_carlo(
-    net_worth, contrib_totale, rendimento, volatilita,
+    net_worth, contrib_totale, rendimento, volatilita
 )
 
 percentiles = np.percentile(final_values, [10, 25, 50, 75, 90])
@@ -711,100 +627,80 @@ prob_100k = (final_values >= 100_000).mean() * 100
 prob_500k = (final_values >= 500_000).mean() * 100
 prob_1m = (final_values >= 1_000_000).mean() * 100
 
-# Metrics row
 mc1, mc2, mc3, mc4 = st.columns(4)
-mc1.metric("Prob. ≥ €100k", "{:.0f}%".format(prob_100k), help="Probabilità di raggiungere €100k in 25 anni")
-mc2.metric("Prob. ≥ €500k", "{:.0f}%".format(prob_500k), help="Probabilità di raggiungere €500k in 25 anni")
-mc3.metric("Prob. ≥ €1M", "{:.0f}%".format(prob_1m), help="Probabilità di raggiungere €1M in 25 anni")
-mc4.metric("Mediana 25a", "€{:,.0f}".format(percentiles[2]), help="Valore mediano atteso dopo 25 anni")
+mc1.metric("Prob. ≥ €100k", "{:.0f}%".format(prob_100k))
+mc2.metric("Prob. ≥ €500k", "{:.0f}%".format(prob_500k))
+mc3.metric("Prob. ≥ €1M", "{:.0f}%".format(prob_1m))
+mc4.metric("Mediana 25a", "€{:,.0f}".format(percentiles[2]))
 
-# Chart
 n_months_mc = scenarios.shape[1]
 dates_mc = pd.date_range(
-    start=pd.Timestamp.today().normalize(),
-    periods=n_months_mc,
-    freq="MS",
+    start=pd.Timestamp.today().normalize(), periods=n_months_mc, freq="MS"
 ).to_pydatetime()
 
 fig_mc = go.Figure()
 
-# Sample scenarios for background texture (lightweight)
-sample_indices = [10, 50, 150, 300, 500, 700, 900]
-for idx in sample_indices:
+# Sample background scenarios
+for idx in [10, 50, 150, 300, 500, 700, 900]:
     if idx < len(scenarios):
         fig_mc.add_trace(go.Scatter(
-            x=dates_mc,
-            y=scenarios[idx],
-            mode="lines",
+            x=dates_mc, y=scenarios[idx], mode="lines",
             line=dict(color="rgba(108,159,255,0.07)", width=0.8),
-            showlegend=False,
-            hoverinfo="skip",
+            showlegend=False, hoverinfo="skip",
         ))
 
-# Percentile bands
-p_configs = [
-    (10, "Pessimista (10°)", DANGER, 2.5, "dot"),
-    (50, "Mediana", ACCENT, 3, "solid"),
-    (90, "Ottimista (90°)", SUCCESS, 2.5, "dot"),
-]
-
-for pval, label, color, width, dash in p_configs:
-    pline = np.percentile(scenarios, pval, axis=0)
-    fig_mc.add_trace(go.Scatter(
-        x=dates_mc,
-        y=pline,
-        mode="lines",
-        name=label,
-        line=dict(color=color, width=width, dash=dash),
-        hovertemplate="<b>" + label + "</b><br>%{x|%B %Y}<br>€%{y:,.0f}<extra></extra>",
-    ))
-
-# Confidence band (25th-75th)
+# Confidence band 25-75
 p25 = np.percentile(scenarios, 25, axis=0)
 p75 = np.percentile(scenarios, 75, axis=0)
-
 fig_mc.add_trace(go.Scatter(
     x=np.concatenate([dates_mc, dates_mc[::-1]]),
     y=np.concatenate([p75, p25[::-1]]),
-    fill="toself",
-    fillcolor="rgba(108,159,255,0.06)",
-    line=dict(width=0),
-    showlegend=False,
-    hoverinfo="skip",
-    name="Banda 25-75°",
+    fill="toself", fillcolor="rgba(108,159,255,0.06)",
+    line=dict(width=0), showlegend=False, hoverinfo="skip",
 ))
 
-# €1M target line
+# Percentile lines
+for pval, label, color, dash in [
+    (10, "Pessimista (10°)", DANGER, "dot"),
+    (50, "Mediana", ACCENT, "solid"),
+    (90, "Ottimista (90°)", SUCCESS, "dot"),
+]:
+    pline = np.percentile(scenarios, pval, axis=0)
+    fig_mc.add_trace(go.Scatter(
+        x=dates_mc, y=pline, mode="lines", name=label,
+        line=dict(color=color, width=2.5, dash=dash),
+        hovertemplate="<b>" + label + "</b><br>%{x|%B %Y}<br>€%{y:,.0f}<extra></extra>",
+    ))
+
 fig_mc.add_hline(
-    y=1_000_000,
-    line_dash="dash",
-    line_color=GOLD,
-    opacity=0.4,
-    annotation_text="€1M",
-    annotation_position="top right",
-    annotation_font_color=GOLD,
-    annotation_font_size=11,
+    y=1_000_000, line_dash="dash", line_color=GOLD, opacity=0.4,
+    annotation_text="€1M", annotation_position="top right",
+    annotation_font_color=GOLD, annotation_font_size=11,
 )
 
 fig_mc.update_layout(
-    **base_layout(CHART_LG),
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(color=TEXT2),
+    height=CHART_LG,
+    margin=dict(t=24, b=24, l=12, r=12),
+    xaxis=dict(showgrid=False, tickfont=dict(color=TEXT3, size=11)),
     yaxis=dict(
-        showgrid=True,
-        gridcolor="rgba(255,255,255,0.04)",
-        tickfont=dict(color=TEXT3, size=11),
-        tickprefix="€",
+        showgrid=True, gridcolor="rgba(255,255,255,0.04)",
+        tickfont=dict(color=TEXT3, size=11), tickprefix="€",
     ),
+    legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center", font=dict(size=11)),
 )
 st.plotly_chart(fig_mc, use_container_width=True, config=PLOTLY_CFG)
 
 # ============================================================
-# SUNBURST — Full asset map
+# SUNBURST
 # ============================================================
 st.markdown("---")
 
-asset_data = []
+asset_rows = []
 for nome, valore in prezzi_etf.items():
-    asset_data.append({
+    asset_rows.append({
         "Fonte": "Degiro (ETF)",
         "Asset": etf_data[nome]["classe"],
         "Valore": float(valore),
@@ -812,28 +708,25 @@ for nome, valore in prezzi_etf.items():
 for conto, dati in patrimonio.items():
     if conto.lower() == "degiro":
         continue
-    asset_data.append({
+    asset_rows.append({
         "Fonte": dati["tipo"],
         "Asset": conto,
         "Valore": float(dati["saldo"]),
     })
 
-df_sun = pd.DataFrame(asset_data)
+df_sun = pd.DataFrame(asset_rows)
 
 fig_sun = px.sunburst(
-    df_sun,
-    path=["Fonte", "Asset"],
-    values="Valore",
+    df_sun, path=["Fonte", "Asset"], values="Valore",
     color="Valore",
-    color_continuous_scale=[[0, "#1a1a4e"], [0.5, "#6C9FFF"], [1, "#34D399"]],
+    color_continuous_scale=[[0, "#1a1a4e"], [0.5, ACCENT], [1, SUCCESS]],
 )
 fig_sun.update_layout(
-    **base_layout(CHART_MD),
-    title=dict(
-        text="Mappa Completa Patrimonio",
-        font=dict(size=16, color=TEXT1),
-        x=0.5,
-    ),
+    paper_bgcolor="rgba(0,0,0,0)",
+    font=dict(color=TEXT2),
+    height=CHART_MD,
+    margin=dict(t=48, b=12, l=12, r=12),
+    title=dict(text="Mappa Completa Patrimonio", font=dict(size=16, color=TEXT1), x=0.5),
     coloraxis_showscale=False,
 )
 fig_sun.update_traces(
@@ -842,48 +735,38 @@ fig_sun.update_traces(
     insidetextfont=dict(size=11),
 )
 
-with st.expander("🗺 Mappa completa patrimonio (Sunburst)", expanded=False):
+with st.expander("🗺 Mappa patrimonio (Sunburst)", expanded=False):
     st.plotly_chart(fig_sun, use_container_width=True, config=PLOTLY_CFG)
 
 # ============================================================
-# DISTRIBUTION HISTOGRAM
+# HISTOGRAM — Final distribution
 # ============================================================
-with st.expander("📊 Distribuzione scenari finali Monte Carlo", expanded=False):
+with st.expander("📊 Distribuzione scenari finali", expanded=False):
     fig_hist = go.Figure(data=[go.Histogram(
-        x=final_values,
-        nbinsx=60,
-        marker=dict(
-            color=ACCENT,
-            opacity=0.7,
-            line=dict(color=ACCENT, width=0.5),
-        ),
+        x=final_values, nbinsx=60,
+        marker=dict(color=ACCENT, opacity=0.7, line=dict(color=ACCENT, width=0.5)),
         hovertemplate="€%{x:,.0f}<br>%{y} scenari<extra></extra>",
     )])
     fig_hist.add_vline(
-        x=percentiles[2], line_dash="dash", line_color=TEXT1, opacity=0.6,
+        x=float(percentiles[2]), line_dash="dash", line_color=TEXT1, opacity=0.6,
         annotation_text="Mediana €{:,.0f}".format(percentiles[2]),
-        annotation_font_color=TEXT1,
-        annotation_font_size=11,
+        annotation_font_color=TEXT1, annotation_font_size=11,
     )
     fig_hist.update_layout(
-        **base_layout(CHART_SM),
-        title=dict(
-            text="Distribuzione valori a 25 anni",
-            font=dict(size=14, color=TEXT2),
-            x=0.5,
-        ),
-        xaxis=dict(
-            showgrid=False,
-            tickfont=dict(color=TEXT3, size=11),
-            tickprefix="€",
-        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color=TEXT2),
+        height=CHART_SM,
+        margin=dict(t=24, b=24, l=12, r=12),
+        title=dict(text="Distribuzione valori a 25 anni", font=dict(size=14, color=TEXT2), x=0.5),
+        xaxis=dict(showgrid=False, tickfont=dict(color=TEXT3, size=11), tickprefix="€"),
         yaxis=dict(
-            showgrid=True,
-            gridcolor="rgba(255,255,255,0.04)",
+            showgrid=True, gridcolor="rgba(255,255,255,0.04)",
             tickfont=dict(color=TEXT3, size=11),
             title=dict(text="Scenari", font=dict(size=11, color=TEXT3)),
         ),
         bargap=0.05,
+        legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center", font=dict(size=11)),
     )
     st.plotly_chart(fig_hist, use_container_width=True, config=PLOTLY_CFG)
 
@@ -892,35 +775,21 @@ with st.expander("📊 Distribuzione scenari finali Monte Carlo", expanded=False
 # ============================================================
 st.markdown("---")
 
-quote = naval_quotes[datetime.now().day % len(naval_quotes)]
+quote_text = naval_quotes[datetime.now().day % len(naval_quotes)]
 
 footer_html = (
     '<div style="text-align:center;padding:1.5rem 1rem;" role="contentinfo">'
-    '<p style="font-style:italic;font-size:0.875rem;color:'
-    + TEXT2
-    + ';margin:0 0 4px 0;line-height:1.5;">"'
-    + quote
-    + '"</p>'
-    '<p style="font-size:0.75rem;color:'
-    + TEXT3
-    + ';margin:0 0 1rem 0;">— Naval Ravikant</p>'
-    '<div style="'
-    "display:inline-flex;align-items:center;gap:6px;"
-    "background:rgba(255,255,255,0.03);"
-    "border:1px solid rgba(255,255,255,0.04);"
-    "border-radius:9999px;"
-    "padding:6px 14px;"
-    '">'
-    '<div style="width:6px;height:6px;border-radius:50%;background:'
-    + SUCCESS
-    + ';"></div>'
-    '<span style="font-size:0.6875rem;color:'
-    + TEXT3
-    + ';">Aggiornato: '
-    + datetime.now().strftime("%d/%m/%Y %H:%M")
-    + " · Yahoo Finance</span>"
-    "</div></div>"
+    '<p style="font-style:italic;font-size:0.875rem;color:' + TEXT2 + ';'
+    'margin:0 0 4px 0;line-height:1.5;">"' + quote_text + '"</p>'
+    '<p style="font-size:0.75rem;color:' + TEXT3 + ';margin:0 0 1rem 0;">'
+    "— Naval Ravikant</p>"
+    '<div style="display:inline-flex;align-items:center;gap:6px;'
+    "background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);"
+    'border-radius:9999px;padding:6px 14px;">'
+    '<div style="width:6px;height:6px;border-radius:50%;background:' + SUCCESS + ';"></div>'
+    '<span style="font-size:0.6875rem;color:' + TEXT3 + ';">'
+    "Aggiornato: " + datetime.now().strftime("%d/%m/%Y %H:%M") + " · Yahoo Finance"
+    "</span></div></div>"
 )
 st.markdown(footer_html, unsafe_allow_html=True)
 
-        
