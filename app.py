@@ -598,7 +598,7 @@ for m in milestones:
     # Adaptive bar text: inside if enough space, otherwise outside
     bar_text_pos = "inside" if pct > 15 else "outside"
 
-      milestone_html = (
+    milestone_html = (
         '<div style="margin:12px 0;" role="progressbar" '
         'aria-valuenow="' + str(round(pct, 1)) + '" '
         'aria-valuemin="0" aria-valuemax="100" '
