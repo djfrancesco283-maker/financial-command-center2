@@ -17,6 +17,38 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+st.markdown("""
+<style>
+
+/* Rimuove header bianco Streamlit */
+header[data-testid="stHeader"] {
+    display: none;
+}
+
+/* Rimuove toolbar Streamlit */
+div[data-testid="stToolbar"] {
+    display: none;
+}
+
+/* Rimuove menu hamburger */
+#MainMenu {visibility: hidden;}
+
+/* Rimuove footer Streamlit */
+footer {visibility: hidden;}
+
+/* Elimina spazio sopra contenuto */
+.block-container {
+    padding-top: 0rem !important;
+}
+
+/* Rimuove spazio extra sopra tutto */
+div[data-testid="stAppViewContainer"] > .main {
+    padding-top: 0rem;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 # Tema scuro custom
 st.markdown(
     """
