@@ -572,7 +572,7 @@ st.markdown(
 )
 st.caption("Crescita stimata a 30 anni con contributi regolari e rendimento composto.")
 
-proiezione = compute_projection(net_worth, contrib_totale, rendimento, anni=30)
+proiezione = compute_projection(net_worth, contrib_totale, rendimento, years=30)
 date_proj = pd.date_range(
     start=pd.Timestamp.today().normalize(), periods=len(proiezione), freq="MS"
 ).to_pydatetime()
